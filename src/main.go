@@ -1,21 +1,17 @@
 package main
 
 import (
+	"kitchen/src/controllers"
+	coreService "kitchen/src/services"
+
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := gin.Default()
+	ginEngine := gin.Default()
 
-	// default path
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, "Dining-Hall is up!")
-	})
+	coreService.InitCoreService()
+	controllers.SetupController(ginEngine)
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-	r.Run(":4006")
+	ginEngine.Run(":4006")
 }
