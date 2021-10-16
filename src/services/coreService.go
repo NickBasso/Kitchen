@@ -1,10 +1,10 @@
 package coreService
 
 import (
-	"kitchen/src/components/apparatus"
-	"kitchen/src/components/food"
-	"kitchen/src/components/kitchen"
-	"kitchen/src/components/order"
+	"kitchen/src/components/types/apparatus"
+	"kitchen/src/components/types/food"
+	"kitchen/src/components/types/kitchen"
+	"kitchen/src/components/types/order"
 )
 
 type Kitchen = kitchen.Kitchen
