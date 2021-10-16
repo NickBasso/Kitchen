@@ -8,10 +8,11 @@ import (
 )
 
 func main() {
-	ginEngine := gin.Default()
+	gin.ForceConsoleColor()
+	router := gin.Default()
 
 	coreService.InitCoreService()
-	controllers.SetupController(ginEngine)
+	controllers.SetupController(router)
 
-	ginEngine.Run(":4006")
+	router.Run(":4006")
 }

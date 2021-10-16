@@ -1,10 +1,10 @@
 package kitchen
 
 import (
-	"kitchen/src/components/apparatus"
-	"kitchen/src/components/cook"
-	"kitchen/src/components/food"
-	"kitchen/src/components/order"
+	"kitchen/src/components/types/apparatus"
+	"kitchen/src/components/types/cook"
+	"kitchen/src/components/types/food"
+	"kitchen/src/components/types/order"
 )
 
 type Kitchen struct {
