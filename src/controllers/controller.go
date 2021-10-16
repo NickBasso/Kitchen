@@ -6,18 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func placeOrder(c *gin.Context) {
-	id := c.Query("id")
-	items := c.Query("items")
-	priority := c.Query("priority")
-	maxWait := c.Query("maxWait")
+func processOrder(c *gin.Context) {
+	// items := c.Query("items")
+	// priority := c.Query("priority")
+	// maxWait := c.Query("maxWait")
+
+	id, err := c.Cookie("id")
+	if(err != nil) {}
 
 	c.JSON(200, gin.H{
-		"id":       id,
-		"items":    items,
-		"priority": priority,
-		"maxWait":  maxWait,
-		"MenuLength": len(coreService.GetMenu()),
+		"id": id,
 	})
 }
 
@@ -41,8 +39,8 @@ func SetupController(ginEngine *gin.Engine) {
 
 	// home path
 	ginEngine.GET("/", func(c *gin.Context) {
-		c.JSON(200, "Dining hall server is up!")
+		c.JSON(200, "Kitchen server is up!")
 	})
 
-	ginEngine.POST("/order", placeOrder)
+	ginEngine.GET("/order", processOrder)
 }
