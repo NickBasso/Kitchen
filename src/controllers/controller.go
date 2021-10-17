@@ -1,21 +1,39 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"kitchen/src/components/constants"
+	"kitchen/src/services"
 	coreService "kitchen/src/services"
 
 	"github.com/gin-gonic/gin"
 )
+
+type Order services.Order
 
 func processOrder(c *gin.Context) {
 	// items := c.Query("items")
 	// priority := c.Query("priority")
 	// maxWait := c.Query("maxWait")
 
-	id, err := c.Cookie("id")
-	if(err != nil) {}
+	// id, err := c.Cookie("id")
+	// if(err != nil) {}
+	orders := make([]Order, constants.GeneratedOrdersCount)
+	jsonDataRaw, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {}
+
+	e := json.Unmarshal(jsonDataRaw, &orders)
+	if e != nil {}
+
+	for i := 0; i < len(orders); i++ {
+		fmt.Printf("Order %d: %v\n", i + 1, orders[i])
+	}
 
 	c.JSON(200, gin.H{
-		"id": id,
+		"id": 412,
+		"orders": c.Request.Body,
 	})
 }
 
@@ -28,7 +46,7 @@ func getOrderList(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"id":       id,
 		"items":    items,
-		"priority": priority,
+		"priority": priority,	
 		"maxWait":  maxWait,
 	})
 }
@@ -42,5 +60,5 @@ func SetupController(ginEngine *gin.Engine) {
 		c.JSON(200, "Kitchen server is up!")
 	})
 
-	ginEngine.GET("/order", processOrder)
+	ginEngine.POST("/order", processOrder)
 }
