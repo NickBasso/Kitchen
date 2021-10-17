@@ -1,0 +1,5 @@
+// build docker image
+docker build -t kitchen .
+
+// run docker container
+docker run -it -p 4006:4006 kitchen
