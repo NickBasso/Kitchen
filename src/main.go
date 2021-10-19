@@ -11,8 +11,7 @@ import (
 func main() {
 	gin.ForceConsoleColor()
 	router := gin.Default()
-
-	configs.SetupENV()
+  
 	services.InitCoreService()
 	controllers.SetupController(router)
 
