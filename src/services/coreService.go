@@ -11,13 +11,22 @@ type Kitchen = kitchen.Kitchen
 type Apparatus = apparatus.Apparatus
 type Food = food.Food
 type Order = order.Order
-
+type Delivery = order.Delivery
 
 var kitchenRef *Kitchen = nil
+var orderList *[]Order = nil
 
 func InitCoreService() {
 	kitchenRef = new(Kitchen)
+	orderList = new([]Order)
 	fillFoodList()
+}
+
+func ProcessOrder(order Order) Delivery {
+
+
+	
+	return Delivery{OrderID: order.OrderID}
 }
 
 func fillFoodList () {
