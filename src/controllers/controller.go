@@ -1,40 +1,60 @@
 package controllers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"kitchen/src/components/constants"
-	"kitchen/src/services"
+	"kitchen/src/components/types/order"
 	coreService "kitchen/src/services"
+	"log"
+	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Order services.Order
+type Order = order.Order
+type Delivery order.Delivery
 
 func processOrder(c *gin.Context) {
-	// items := c.Query("items")
-	// priority := c.Query("priority")
-	// maxWait := c.Query("maxWait")
+	var order order.Order;
 
-	// id, err := c.Cookie("id")
-	// if(err != nil) {}
-	orders := make([]Order, constants.GeneratedOrdersCount)
 	jsonDataRaw, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {}
 
-	e := json.Unmarshal(jsonDataRaw, &orders)
+	e := json.Unmarshal(jsonDataRaw, &order)
 	if e != nil {}
 
-	for i := 0; i < len(orders); i++ {
-		fmt.Printf("Order %d: %v\n", i + 1, orders[i])
+	fmt.Printf("POST order %s received, processing...\n", order.OrderID)
+	c.JSON(200, "Order received, processing...");
+
+	delivery := coreService.ProcessOrder(order)
+
+	reqBody, reqBodySerializationErr := json.Marshal(delivery)
+		if reqBodySerializationErr != nil {
+			log.Fatalln(reqBodySerializationErr)
+		}
+
+	resp, POSTErr := http.Post(os.Getenv("DHALL_URL")+"/distribution", "application/json", bytes.NewBuffer(reqBody))
+		if POSTErr != nil {
+			log.Fatalln(POSTErr)
+		}
+
+	defer resp.Body.Close()
+
+	body, readPOSTResErr := ioutil.ReadAll(resp.Body)
+	if readPOSTResErr != nil {
+		log.Fatalln(readPOSTResErr)
 	}
 
-	c.JSON(200, gin.H{
-		"id": 412,
-		"orders": c.Request.Body,
-	})
+	var POSTDeliveryRes string;
+	POSTResDeserializationErr := json.Unmarshal(body, &POSTDeliveryRes)
+	if(POSTResDeserializationErr != nil) {
+		log.Fatalln(POSTResDeserializationErr)
+	}
+
+	fmt.Printf("POST delivery: %s => %v\n", delivery.OrderID, POSTDeliveryRes)
 }
 
 func getOrderList(c *gin.Context) {
@@ -52,10 +72,8 @@ func getOrderList(c *gin.Context) {
 }
 
 func SetupController(ginEngine *gin.Engine) {
-	// init operations' service
   coreService.InitCoreService();
 
-	// home path
 	ginEngine.GET("/", func(c *gin.Context) {
 		c.JSON(200, "Kitchen server is up!")
 	})
