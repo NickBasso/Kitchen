@@ -9,19 +9,29 @@ import (
 	"kitchen/src/components/types/kitchen"
 	"kitchen/src/components/types/order"
 	"kitchen/src/components/types/order/props"
+	"sync"
 )
 
-type Kitchen = kitchen.Kitchen
-type Cook = cook.Cook
-type Apparatus = apparatus.Apparatus
-type ApparatusState = apparatus.ApparatusState
-type Food = food.Food
-type Order = order.Order
-type ItemCookingDetail = props.ItemCookingDetail
-type Delivery = order.Delivery
+ type ( 
+	Kitchen = kitchen.Kitchen
+	Cook = cook.Cook
+	Apparatus = apparatus.Apparatus
+	ApparatusState = apparatus.ApparatusState
+	Food = food.Food
+	Order = order.Order
+	ItemCookingDetail = props.ItemCookingDetail
+	Delivery = order.Delivery
+)
 
-var kitchenRef *Kitchen = nil
-var foodMenu = food.GetMenuMap()
+
+var (
+	kitchenRef *Kitchen = nil
+  foodMenu = food.GetMenuMap()
+  foodMenuMutex = sync.RWMutex{}
+	apparatusMapMutex = sync.RWMutex{}
+	foodApparatusMutex = sync.RWMutex{}
+	orderMapMutex = sync.RWMutex{}	
+)
 
 func InitCoreService() {
 	kitchenRef = new(Kitchen)
@@ -58,10 +68,6 @@ func InitCoreService() {
 	kitchenRef.Apparatus["Stove"] = 2
 	kitchenRef.Apparatus["Oven"] = 1
 
-	/* ApparatusState{
-		Ovens: apparatus.OvenState{TotalCount: 1, FreeCount: 1},
-		Stoves: apparatus.StoveState{TotalCount: 2, FreeCount: 2},
-	} */
 	kitchenRef.OrderMap = make(map[string]Order, constants.GeneratedOrdersCount)
 	
 	println("Cooks:\n")
@@ -73,58 +79,87 @@ func InitCoreService() {
 }
 
 func ProcessOrder(order Order) Delivery {
+	println("ProcessOrder entered!");
+
 	kitchenRef.OrderMap[order.OrderID] = order
 	itemsCnt := len(order.Items)
 
-	// orderChannel := make(chan Delivery)
 	cookedItems := make([]ItemCookingDetail, itemsCnt)
-	itemDetailChannels := make([]chan ItemCookingDetail, itemsCnt)
-	for i := range itemDetailChannels {
-		itemDetailChannels[i] = make(chan ItemCookingDetail)
- }
+	jobs := make(chan int, itemsCnt)
+	results := make(chan ItemCookingDetail, itemsCnt)
 
- println("channels size: ", len(itemDetailChannels))
-
+	go cookItem(jobs, results)
 	for i := 0; i < itemsCnt; i++ {
-		go cookItem(order.Items[i], itemDetailChannels[i])
+		jobs <- order.Items[i]
+	}
+	close(jobs)
+
+	for j := 0; j < itemsCnt; j++ {
+		cookedItems[j] = <-results
+		fmt.Printf("Cooked item apparatus: %s\n", string(foodMenu[cookedItems[j].FoodID].Apparatus))
+		kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount = kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount - 1
+		println("ovens before: ", kitchenRef.Apparatus["Oven"])
+		kitchenRef.Apparatus[string(foodMenu[cookedItems[j].FoodID].Apparatus)] = kitchenRef.Apparatus[string(foodMenu[cookedItems[j].FoodID].Apparatus)] + 1 
+		println("ovens after: ", kitchenRef.Apparatus["Oven"])
+
+		delete(kitchenRef.OrderMap, order.OrderID)
+		fmt.Println(cookedItems[j])
 	}
 
-	// go cookOrder(order, orderChannel)
+	defer foodMenuMutex.Unlock() 
+	defer foodApparatusMutex.Unlock()
+	defer apparatusMapMutex.Unlock()
 
-	/* for k, v := range kitchenRef.OrderMap {
+	return Delivery{}
+} 
+
+func cookItem(foods <-chan int, results chan<- ItemCookingDetail) {
+	println("cookItem entered!")
+	println("foods channel size: ", len(foods))
+
+	for foodID := range foods {
+		println("inside range foods!")
+		foodMenuMutex.Lock()
+		defer foodMenuMutex.Unlock() 
+		dishComplexity := foodMenu[foodID].Complexity
+
+		foodApparatusMutex.Lock()
+		defer foodApparatusMutex.Unlock()
+		foodApparatus := foodMenu[foodID].Apparatus
+
+		apparatusMapMutex.Lock()
+		defer apparatusMapMutex.Unlock()
+		apparatusAvailable := kitchenRef.Apparatus[string(foodApparatus)]
 		
-	} */
-fmt.Printf("orderChannel ProcessOrder: %v\n", itemDetailChannels)
-	for i := 0; i < itemsCnt; i++ {
-		cookedItems[i] = <-itemDetailChannels[i]
-		fmt.Printf("Channel %d result: %v\n", i, cookedItems[i])
-		kitchenRef.Cooks[cookedItems[i].CookID].WorkingCount-- 
-		kitchenRef.Apparatus[string(foodMenu[cookedItems[i].FoodID].Apparatus)]++
-		//close(itemDetailChannels[i])
-	}
+		println("kitchen cooks: ", len(kitchenRef.Cooks))
+		for {
+			for i := 0; i < len(kitchenRef.Cooks); i++ {
+				cook := &kitchenRef.Cooks[i]
 
-	// close(itemDetailChannels)
-	
-	delete(kitchenRef.OrderMap, order.OrderID)
-	return Delivery{OrderID: order.OrderID}
-}
+				// fmt.Printf("DishComplexity=%d - FoodApparatus=%s - ApparatusAvailable=%d - CookRank=%d - CookProficiency=%d \n",
+				//  dishComplexity, foodApparatus, apparatusAvailable, cook.Rank, cook.Proficiency)
 
-func cookItem(foodID int, itemCookingDetailChannel chan ItemCookingDetail)  {
-	for i := 0; i < len(kitchenRef.Cooks); i++ {
-		cook := kitchenRef.Cooks[i]
-	  if( (cook.Rank == foodMenu[foodID].Complexity ||
-				cook.Rank - 1 == foodMenu[foodID].Complexity) &&
-				cook.Proficiency > cook.WorkingCount &&
-				kitchenRef.Apparatus[string(foodMenu[foodID].Apparatus)] > 0){
-					cook.WorkingCount++
-					kitchenRef.Apparatus[string(foodMenu[foodID].Apparatus)]--
+				// println("isTakingItem: ", 
+												// (cook.Rank == dishComplexity ||
+												// cook.Rank - 1 == dishComplexity) &&
+												// cook.Proficiency > cook.WorkingCount &&
+												// apparatusAvailable > 0)
+				// fmt.Printf("%t %t %t\n", (cook.Rank == dishComplexity ||
+					// cook.Rank - 1 == dishComplexity), cook.Proficiency > cook.WorkingCount, 	apparatusAvailable > 0)
+				// println("apparatus used: ", string(foodApparatus))
 
-					itemCookingDetailChannel <- ItemCookingDetail{FoodID: foodID, CookID: cook.ID, CookingTime: kitchenRef.Menu[foodID].PreparationTime}
+				if( (cook.Rank == dishComplexity ||
+						cook.Rank - 1 == dishComplexity) &&
+						cook.Proficiency > cook.WorkingCount &&
+						apparatusAvailable > 0){
+							cook.WorkingCount++
+							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] - 1
+							println("apparatus after taking item to cook: ", kitchenRef.Apparatus[string(foodApparatus)])
+							
+							results <- ItemCookingDetail{FoodID: foodID, CookID: cook.ID, CookingTime: kitchenRef.Menu[foodID].PreparationTime}
+							break
+				}
+			}
 		}
 	}
-
-	// orderChannel <- Delivery{}
-	// fmt.Printf("orderChannel cookOrder: %v\n", orderChannel)
-
-	// return Delivery{}
 }
