@@ -14,7 +14,7 @@ type Food struct {
 }
 
 func GetMenuArray() []Food {
-	foodList := append(make([]Food, 0), Food{
+	foodList := append(make([]Food, 10), Food{
 		ID:              1,
 		Name:            "pizza",
 		PreparationTime: 20,
