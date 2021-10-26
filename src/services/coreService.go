@@ -93,6 +93,7 @@ func ProcessOrder(order Order) Delivery {
 		jobs <- order.Items[i]
 	}
 	close(jobs)
+	defer close(results)
 
 	for j := 0; j < itemsCnt; j++ {
 		cookedItems[j] = <-results
@@ -136,28 +137,20 @@ func cookItem(foods <-chan int, results chan<- ItemCookingDetail) {
 			for i := 0; i < len(kitchenRef.Cooks); i++ {
 				cook := &kitchenRef.Cooks[i]
 
-				// fmt.Printf("DishComplexity=%d - FoodApparatus=%s - ApparatusAvailable=%d - CookRank=%d - CookProficiency=%d \n",
-				//  dishComplexity, foodApparatus, apparatusAvailable, cook.Rank, cook.Proficiency)
-
-				// println("isTakingItem: ", 
-												// (cook.Rank == dishComplexity ||
-												// cook.Rank - 1 == dishComplexity) &&
-												// cook.Proficiency > cook.WorkingCount &&
-												// apparatusAvailable > 0)
-				// fmt.Printf("%t %t %t\n", (cook.Rank == dishComplexity ||
-					// cook.Rank - 1 == dishComplexity), cook.Proficiency > cook.WorkingCount, 	apparatusAvailable > 0)
-				// println("apparatus used: ", string(foodApparatus))
+				fmt.Printf("Before:\n\tDishComplexity=%d - FoodApparatus=%s - ApparatusAvailable=%d - CookRank=%d - CookProficiency=%d \n",
+				 dishComplexity, foodApparatus, apparatusAvailable, cook.Rank, cook.Proficiency)
 
 				if( (cook.Rank == dishComplexity ||
 						cook.Rank - 1 == dishComplexity) &&
 						cook.Proficiency > cook.WorkingCount &&
 						apparatusAvailable > 0){
 							cook.WorkingCount++
+							apparatusMapMutex.RLock()
+							defer apparatusMapMutex.RUnlock()
 							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] - 1
-							println("apparatus after taking item to cook: ", kitchenRef.Apparatus[string(foodApparatus)])
+							fmt.Printf("apparatus(%s) after taking item to cook: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
 							
 							results <- ItemCookingDetail{FoodID: foodID, CookID: cook.ID, CookingTime: kitchenRef.Menu[foodID].PreparationTime}
-							break
 				}
 			}
 		}

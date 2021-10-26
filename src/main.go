@@ -1,7 +1,6 @@
 package main
 
 import (
-	"kitchen/src/configs"
 	"kitchen/src/controllers"
 	"kitchen/src/services"
 
