@@ -1,6 +1,7 @@
 package main
 
 import (
+	"kitchen/src/configs"
 	"kitchen/src/controllers"
 	"kitchen/src/services"
 
@@ -8,6 +9,7 @@ import (
 )
 
 func main() {
+	configs.SetupENV()
 	gin.ForceConsoleColor()
 	router := gin.Default()
   
