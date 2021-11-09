@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	configs.SetupENV()
 	gin.ForceConsoleColor()
 	router := gin.Default()
   

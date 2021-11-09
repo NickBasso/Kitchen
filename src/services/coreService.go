@@ -10,7 +10,7 @@ import (
 	"kitchen/src/components/types/order"
 	"kitchen/src/components/types/order/props"
 	"sync"
-)
+	"time"
 
  type ( 
 	Kitchen = kitchen.Kitchen
@@ -20,6 +20,7 @@ import (
 	Food = food.Food
 	Order = order.Order
 	ItemCookingDetail = props.ItemCookingDetail
+	DeliveryCookingDetail = props.DeliveryCookingDetail
 	Delivery = order.Delivery
 )
 
@@ -78,88 +79,102 @@ func InitCoreService() {
 	fmt.Printf("%v\n", kitchenRef.Apparatus)
 }
 
-func ProcessOrder(order Order) Delivery {
-	println("ProcessOrder entered!");
+func ProcessOrder(order Order) Delivery {	
+	println("ProcessOrder entered!")
 
 	kitchenRef.OrderMap[order.OrderID] = order
 	itemsCnt := len(order.Items)
+	cookedItems := make([]DeliveryCookingDetail, itemsCnt)
 
-	cookedItems := make([]ItemCookingDetail, itemsCnt)
-	jobs := make(chan int, itemsCnt)
-	results := make(chan ItemCookingDetail, itemsCnt)
-
-	go cookItem(jobs, results)
-	for i := 0; i < itemsCnt; i++ {
-		jobs <- order.Items[i]
-	}
-	close(jobs)
+	fmt.Printf("ORDER ITEMS : %v\n", order.Items)
+	
+	deliveries := cookOrder(order.Items)
 
 	for j := 0; j < itemsCnt; j++ {
-		cookedItems[j] = <-results
+		// cookedItems[j] = <-results
 		fmt.Printf("Cooked item apparatus: %s\n", string(foodMenu[cookedItems[j].FoodID].Apparatus))
-		kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount = kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount - 1
+		// kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount = kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount - 1
 		println("ovens before: ", kitchenRef.Apparatus["Oven"])
-		kitchenRef.Apparatus[string(foodMenu[cookedItems[j].FoodID].Apparatus)] = kitchenRef.Apparatus[string(foodMenu[cookedItems[j].FoodID].Apparatus)] + 1 
+		// kitchenRef.Apparatus[string(foodMenu[cookedItems[j].FoodID].Apparatus)] = kitchenRef.Apparatus[string(foodMenu[cookedItems[j].FoodID].Apparatus)] + 1 
 		println("ovens after: ", kitchenRef.Apparatus["Oven"])
 
 		delete(kitchenRef.OrderMap, order.OrderID)
 		fmt.Println(cookedItems[j])
 	}
 
-	defer foodMenuMutex.Unlock() 
-	defer foodApparatusMutex.Unlock()
-	defer apparatusMapMutex.Unlock()
+	// defer foodMenuMutex.Unlock() 
+	// defer foodApparatusMutex.Unlock()
+	// defer apparatusMapMutex.Unlock()
 
-	return Delivery{}
-} 
+	println("SHOULD BE PRINTED AFTER ALL COOING IS DONE!")
+println(time.Now().UnixMilli() - order.PickUpTime)
+	return Delivery{ OrderID: order.OrderID, TableID: order.TableID, WaiterID: order.WaiterID,
+		               Items: order.Items, Priority: order.Priority, MaxWait: order.MaxWait, PickUpTime: order.PickUpTime,
+		               CookingTime: time.Now().UnixMilli() - order.PickUpTime, CookingDetails: deliveries,
+        }  
+	}
 
-func cookItem(foods <-chan int, results chan<- ItemCookingDetail) {
+func cookOrder(foods []int) []DeliveryCookingDetail{
+	fmt.Printf("FOODS: %v\n", foods)
+	
 	println("cookItem entered!")
 	println("foods channel size: ", len(foods))
 
-	for foodID := range foods {
+	readyCounter := 0
+	deliveries := make([]DeliveryCookingDetail, len(foods))
+
+	for j := 0; j < len(foods); j++ {
+		foodID := foods[j]
 		println("inside range foods!")
-		foodMenuMutex.Lock()
-		defer foodMenuMutex.Unlock() 
+		fmt.Printf("FOOD ID: %d\n", foodID)
+		fmt.Printf("Food: %v\n", foodMenu[foodID])
+		
+		// foodMenuMutex.Lock()
+		// defer foodMenuMutex.Unlock() 
 		dishComplexity := foodMenu[foodID].Complexity
 
-		foodApparatusMutex.Lock()
-		defer foodApparatusMutex.Unlock()
+		// foodApparatusMutex.Lock()
+		// defer foodApparatusMutex.Unlock()
 		foodApparatus := foodMenu[foodID].Apparatus
 
-		apparatusMapMutex.Lock()
-		defer apparatusMapMutex.Unlock()
+		// apparatusMapMutex.Lock()
+		// defer apparatusMapMutex.Unlock()
 		apparatusAvailable := kitchenRef.Apparatus[string(foodApparatus)]
 		
 		println("kitchen cooks: ", len(kitchenRef.Cooks))
-		for {
-			for i := 0; i < len(kitchenRef.Cooks); i++ {
+		for readyCounter < len(foods) {
+
+			for i := 0; readyCounter < len(foods) && i < len(kitchenRef.Cooks); i++ {
 				cook := &kitchenRef.Cooks[i]
 
-				// fmt.Printf("DishComplexity=%d - FoodApparatus=%s - ApparatusAvailable=%d - CookRank=%d - CookProficiency=%d \n",
-				//  dishComplexity, foodApparatus, apparatusAvailable, cook.Rank, cook.Proficiency)
-
-				// println("isTakingItem: ", 
-												// (cook.Rank == dishComplexity ||
-												// cook.Rank - 1 == dishComplexity) &&
-												// cook.Proficiency > cook.WorkingCount &&
-												// apparatusAvailable > 0)
-				// fmt.Printf("%t %t %t\n", (cook.Rank == dishComplexity ||
-					// cook.Rank - 1 == dishComplexity), cook.Proficiency > cook.WorkingCount, 	apparatusAvailable > 0)
-				// println("apparatus used: ", string(foodApparatus))
+				// fmt.Printf("Before:\n\tDishComplexity=%d - FoodApparatus=%s - ApparatusAvailable=%d - CookRank=%d - CookProficiency=%d - CookWorkingCount=%d \n",
+				//  dishComplexity, foodApparatus, apparatusAvailable, cook.Rank, cook.Proficiency, cook.WorkingCount)
 
 				if( (cook.Rank == dishComplexity ||
 						cook.Rank - 1 == dishComplexity) &&
 						cook.Proficiency > cook.WorkingCount &&
 						apparatusAvailable > 0){
+							readyCounter++
 							cook.WorkingCount++
-							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] - 1
-							println("apparatus after taking item to cook: ", kitchenRef.Apparatus[string(foodApparatus)])
 							
-							results <- ItemCookingDetail{FoodID: foodID, CookID: cook.ID, CookingTime: kitchenRef.Menu[foodID].PreparationTime}
-							break
+							// apparatusMapMutex.RLock()
+							// defer apparatusMapMutex.RUnlock()
+							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] - 1
+							// fmt.Printf("apparatus(%s) after taking item to cook: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
+							time.Sleep(time.Duration(foodMenu[foodID].PreparationTime))
+							
+							cook.WorkingCount--
+							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] + 1
+							// fmt.Printf("apparatus(%s) after returning cooked item: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
+								
+							deliveries[readyCounter] = DeliveryCookingDetail{FoodID: foodID, CookID: cook.ID}
+							readyCounter++
+
+							// results <- DeliveryCookingDetail{FoodID: foodID, CookID: cook.ID}
 				}
 			}
 		}
 	}
+
+	return deliveries
 }

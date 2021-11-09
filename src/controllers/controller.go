@@ -27,7 +27,7 @@ func processOrder(c *gin.Context) {
 	if e != nil {}
 
 	fmt.Printf("POST order %s received, processing...\n", order.OrderID)
-	c.JSON(200, "Order received, processing...");
+	c.JSON(200, "Kitchen: Order received, processing...");
 
 	delivery := coreService.ProcessOrder(order)
 
@@ -36,6 +36,8 @@ func processOrder(c *gin.Context) {
 			log.Fatalln(reqBodySerializationErr)
 		}
 
+	println(os.Getenv("DHALL_URL")+"/distribution");
+		
 	resp, POSTErr := http.Post(os.Getenv("DHALL_URL")+"/distribution", "application/json", bytes.NewBuffer(reqBody))
 		if POSTErr != nil {
 			log.Fatalln(POSTErr)
