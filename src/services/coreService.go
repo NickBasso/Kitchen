@@ -85,22 +85,14 @@ func ProcessOrder(order Order) Delivery {
 
 	kitchenRef.OrderMap[order.OrderID] = order
 	itemsCnt := len(order.Items)
-
 	cookedItems := make([]DeliveryCookingDetail, itemsCnt)
-	jobs := make(chan int, itemsCnt)
-	results := make(chan DeliveryCookingDetail, itemsCnt)
 
-	for i := 0; i < itemsCnt; i++ {
-		jobs <- order.Items[i]
-	}
-	close(jobs)
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go cookOrder(jobs, results, &wg)
+	fmt.Printf("ORDER ITEMS : %v\n", order.Items)
+	
+	deliveries := cookOrder(order.Items)
 
 	for j := 0; j < itemsCnt; j++ {
-		cookedItems[j] = <-results
+		// cookedItems[j] = <-results
 		fmt.Printf("Cooked item apparatus: %s\n", string(foodMenu[cookedItems[j].FoodID].Apparatus))
 		// kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount = kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount - 1
 		println("ovens before: ", kitchenRef.Apparatus["Oven"])
@@ -115,34 +107,29 @@ func ProcessOrder(order Order) Delivery {
 	// defer foodApparatusMutex.Unlock()
 	// defer apparatusMapMutex.Unlock()
 
-	/* OrderID        string
-	TableID        int
-	WaiterID       int
-	Items          []int
-	Priority       int
-	MaxWait        int
-	PickUpTime     int64
-	CookingTime    int
-	CookingDetails []props.ItemCookingDetail */
-
-	wg.Wait()
 	println("SHOULD BE PRINTED AFTER ALL COOING IS DONE!")
-
+println(time.Now().UnixMilli() - order.PickUpTime)
 	return Delivery{ OrderID: order.OrderID, TableID: order.TableID, WaiterID: order.WaiterID,
 		               Items: order.Items, Priority: order.Priority, MaxWait: order.MaxWait, PickUpTime: order.PickUpTime,
-		               CookingTime: time.Now().Unix() - order.PickUpTime, CookingDetails: cookedItems,
+		               CookingTime: time.Now().UnixMilli() - order.PickUpTime, CookingDetails: deliveries,
         }  
 	}
 
-func cookOrder(foods <-chan int, results chan<- DeliveryCookingDetail, wg *sync.WaitGroup) {
+func cookOrder(foods []int) []DeliveryCookingDetail{
+	fmt.Printf("FOODS: %v\n", foods)
+	
 	println("cookItem entered!")
 	println("foods channel size: ", len(foods))
 
 	readyCounter := 0
+	deliveries := make([]DeliveryCookingDetail, len(foods))
 
-	for foodID := range foods {
+	for j := 0; j < len(foods); j++ {
+		foodID := foods[j]
 		println("inside range foods!")
+		fmt.Printf("FOOD ID: %d\n", foodID)
 		fmt.Printf("Food: %v\n", foodMenu[foodID])
+		
 		// foodMenuMutex.Lock()
 		// defer foodMenuMutex.Unlock() 
 		dishComplexity := foodMenu[foodID].Complexity
@@ -156,14 +143,13 @@ func cookOrder(foods <-chan int, results chan<- DeliveryCookingDetail, wg *sync.
 		apparatusAvailable := kitchenRef.Apparatus[string(foodApparatus)]
 		
 		println("kitchen cooks: ", len(kitchenRef.Cooks))
-		for {
-			println("Inside OUTSIDE FOR LOOP!")
+		for readyCounter < len(foods) {
 
-			for i := 0; i < len(kitchenRef.Cooks); i++ {
+			for i := 0; readyCounter < len(foods) && i < len(kitchenRef.Cooks); i++ {
 				cook := &kitchenRef.Cooks[i]
 
-				fmt.Printf("Before:\n\tDishComplexity=%d - FoodApparatus=%s - ApparatusAvailable=%d - CookRank=%d - CookProficiency=%d - CookWorkingCount=%d \n",
-				 dishComplexity, foodApparatus, apparatusAvailable, cook.Rank, cook.Proficiency, cook.WorkingCount)
+				// fmt.Printf("Before:\n\tDishComplexity=%d - FoodApparatus=%s - ApparatusAvailable=%d - CookRank=%d - CookProficiency=%d - CookWorkingCount=%d \n",
+				//  dishComplexity, foodApparatus, apparatusAvailable, cook.Rank, cook.Proficiency, cook.WorkingCount)
 
 				if( (cook.Rank == dishComplexity ||
 						cook.Rank - 1 == dishComplexity) &&
@@ -175,20 +161,21 @@ func cookOrder(foods <-chan int, results chan<- DeliveryCookingDetail, wg *sync.
 							// apparatusMapMutex.RLock()
 							// defer apparatusMapMutex.RUnlock()
 							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] - 1
-							fmt.Printf("apparatus(%s) after taking item to cook: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
+							// fmt.Printf("apparatus(%s) after taking item to cook: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
 							time.Sleep(time.Duration(foodMenu[foodID].PreparationTime))
 							
 							cook.WorkingCount--
 							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] + 1
-							fmt.Printf("apparatus(%s) after returning cooked item: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
-							
-							if(readyCounter == len(foods)){
-								wg.Done()
-							}
+							// fmt.Printf("apparatus(%s) after returning cooked item: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
 								
-							results <- DeliveryCookingDetail{FoodID: foodID, CookID: cook.ID}
+							deliveries[readyCounter] = DeliveryCookingDetail{FoodID: foodID, CookID: cook.ID}
+							readyCounter++
+
+							// results <- DeliveryCookingDetail{FoodID: foodID, CookID: cook.ID}
 				}
 			}
 		}
 	}
+
+	return deliveries
 }
