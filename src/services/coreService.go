@@ -37,7 +37,7 @@ var (
 func InitCoreService() {
 	kitchenRef = new(Kitchen)
 	kitchenRef.Cooks = []Cook{
-		{
+		/* {
 			ID: 0,
 			Rank: 3,
 			Proficiency: 4,
@@ -60,6 +60,38 @@ func InitCoreService() {
 			Name: "John Smithson",
 			CatchPhrase: "Who's that even!?",
 			WorkingCount: 0,
+		}, */
+		{
+			ID: 0,
+			Rank: 4,
+			Proficiency: 4,
+			Name: "Gordon Ramsay",
+			CatchPhrase: "Hey, panini head, are you listening to me?",
+			WorkingCount: 0,
+		},
+		{
+			ID: 1,
+			Rank: 3,
+			Proficiency: 2,
+			Name: "Steve Peterson",
+			CatchPhrase: "That's what she said..",
+			WorkingCount: 0,
+		},
+		{
+			ID: 2,
+			Rank: 2,
+			Proficiency: 2,
+			Name: "John Smithson",
+			CatchPhrase: "Who's that even!?",
+			WorkingCount: 0,
+		},
+		{
+			ID: 2,
+			Rank: 2,
+			Proficiency: 1,
+			Name: "Peter Owler",
+			CatchPhrase: "Who's that even!?",
+			WorkingCount: 0,
 		},
 	}
 
@@ -67,7 +99,7 @@ func InitCoreService() {
 	kitchenRef.Apparatus = make(map[string]int, 3)
 	kitchenRef.Apparatus["None"] = 999
 	kitchenRef.Apparatus["Stove"] = 2
-	kitchenRef.Apparatus["Oven"] = 1
+	kitchenRef.Apparatus["Oven"] = 2
 
 	kitchenRef.OrderMap = make(map[string]Order, constants.GeneratedOrdersCount)
 	
@@ -161,7 +193,7 @@ func cookOrder(foods []int) []DeliveryCookingDetail{
 							// defer apparatusMapMutex.RUnlock()
 							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] - 1
 							// fmt.Printf("apparatus(%s) after taking item to cook: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
-							time.Sleep(time.Duration(foodMenu[foodID].PreparationTime))
+							time.Sleep(time.Duration(foodMenu[foodID].PreparationTime) * time.Second)
 							
 							cook.WorkingCount--
 							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] + 1
