@@ -11,6 +11,7 @@ import (
 	"kitchen/src/components/types/order/props"
 	"sync"
 	"time"
+)
 
  type ( 
 	Kitchen = kitchen.Kitchen
@@ -186,6 +187,7 @@ func cookOrder(foods []int) []DeliveryCookingDetail{
 						cook.Rank - 1 == dishComplexity) &&
 						cook.Proficiency > cook.WorkingCount &&
 						apparatusAvailable > 0){
+							readyCounter++
 							cook.WorkingCount++
 							
 							// apparatusMapMutex.RLock()
