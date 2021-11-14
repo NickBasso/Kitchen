@@ -186,6 +186,7 @@ func cookOrder(foods []int) []DeliveryCookingDetail{
 						cook.Rank - 1 == dishComplexity) &&
 						cook.Proficiency > cook.WorkingCount &&
 						apparatusAvailable > 0){
+							readyCounter++
 							cook.WorkingCount++
 							
 							// apparatusMapMutex.RLock()
