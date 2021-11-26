@@ -64,7 +64,7 @@ func InitCoreService() {
 		}, */
 		{
 			ID: 0,
-			Rank: 4,
+			Rank: 3,
 			Proficiency: 4,
 			Name: "Gordon Ramsay",
 			CatchPhrase: "Hey, panini head, are you listening to me?",
@@ -72,8 +72,8 @@ func InitCoreService() {
 		},
 		{
 			ID: 1,
-			Rank: 3,
-			Proficiency: 2,
+			Rank: 2,
+			Proficiency: 3,
 			Name: "Steve Peterson",
 			CatchPhrase: "That's what she said..",
 			WorkingCount: 0,
@@ -83,13 +83,13 @@ func InitCoreService() {
 			Rank: 2,
 			Proficiency: 2,
 			Name: "John Smithson",
-			CatchPhrase: "Who's that even!?",
+			CatchPhrase: "How did you even get here lol ;=>",
 			WorkingCount: 0,
 		},
 		{
-			ID: 2,
-			Rank: 2,
-			Proficiency: 1,
+			ID: 3,
+			Rank: 1,
+			Proficiency: 2,
 			Name: "Peter Owler",
 			CatchPhrase: "Who's that even!?",
 			WorkingCount: 0,
