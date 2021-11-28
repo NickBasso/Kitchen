@@ -139,8 +139,8 @@ func ProcessOrder(order Order) Delivery {
 	// defer foodApparatusMutex.Unlock()
 	// defer apparatusMapMutex.Unlock()
 
-	println("SHOULD BE PRINTED AFTER ALL COOING IS DONE!")
-println(time.Now().UnixMilli() - order.PickUpTime)
+	println("SHOULD BE PRINTED AFTER ALL COOKING IS DONE!")
+  println(time.Now().UnixMilli() - order.PickUpTime)
 	return Delivery{ OrderID: order.OrderID, TableID: order.TableID, WaiterID: order.WaiterID,
 		               Items: order.Items, Priority: order.Priority, MaxWait: order.MaxWait, PickUpTime: order.PickUpTime,
 		               CookingTime: time.Now().UnixMilli() - order.PickUpTime, CookingDetails: deliveries,
@@ -149,6 +149,7 @@ println(time.Now().UnixMilli() - order.PickUpTime)
 
 func cookOrder(foods []int) []DeliveryCookingDetail{
 	fmt.Printf("FOODS: %v\n", foods)
+	fmt.Printf("Cooks amount: %d\n", len(kitchenRef.Cooks));
 	
 	println("cookItem entered!")
 	println("foods channel size: ", len(foods))
@@ -176,6 +177,7 @@ func cookOrder(foods []int) []DeliveryCookingDetail{
 		
 		println("kitchen cooks: ", len(kitchenRef.Cooks))
 		for readyCounter < len(foods) {
+			// println("In loop!")
 
 			for i := 0; readyCounter < len(foods) && i < len(kitchenRef.Cooks); i++ {
 				cook := &kitchenRef.Cooks[i]

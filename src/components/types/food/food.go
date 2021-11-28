@@ -75,6 +75,67 @@ func GetMenuArray() []Food {
 			Complexity:      1,
 			Apparatus:       apparatus.None})
 
+			/* foodList := append(make([]Food, 10), Food{
+				ID:              1,
+				Name:            "pizza",
+				PreparationTime: 1,
+				Complexity:      2,
+				Apparatus:       apparatus.Oven},
+				Food{
+					ID:              2,
+					Name:            "salad",
+					PreparationTime: 1,
+					Complexity:      1,
+					Apparatus:       apparatus.None},
+				Food{
+					ID:              3,
+					Name:            "zeama",
+					PreparationTime:1,
+					Complexity:      1,
+					Apparatus:       apparatus.Stove},
+				Food{
+					ID:              4,
+					Name:            "Scallop Sashimi with Meyer Lemon Confit",
+					PreparationTime: 1,
+					Complexity:      3,
+					Apparatus:       apparatus.None},
+				Food{
+					ID:              5,
+					Name:            "Island Duck with Mulberry Mustard",
+					PreparationTime: 1,
+					Complexity:      3,
+					Apparatus:       apparatus.Oven},
+				Food{
+					ID:              6,
+					Name:            "Waffles",
+					PreparationTime: 1,
+					Complexity:      1,
+					Apparatus:       apparatus.Stove},
+				Food{
+					ID:              7,
+					Name:            "Aubergine",
+					PreparationTime: 1,
+					Complexity:      2,
+					Apparatus:       apparatus.None},
+				Food{
+					ID:              8,
+					Name:            "Lasagna",
+					PreparationTime: 1,
+					Complexity:      2,
+					Apparatus:       apparatus.Oven},
+				Food{
+					ID:              9,
+					Name:            "Burger",
+					PreparationTime: 1,
+					Complexity:      1,
+					Apparatus:       apparatus.Oven},
+				Food{
+					ID:              10,
+					Name:            "Gyros",
+					PreparationTime: 1,
+					Complexity:      1,
+					Apparatus:       apparatus.None}) */
+
 	return foodList
 }
 
