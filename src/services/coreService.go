@@ -177,7 +177,14 @@ func cookOrder(foods []int) []DeliveryCookingDetail{
 		
 		println("kitchen cooks: ", len(kitchenRef.Cooks))
 		for readyCounter < len(foods) {
-			// println("In loop!")
+			println("In loop!")
+			fmt.Printf("Ovens => after returning cooked item: %d\n", kitchenRef.Apparatus[string("Oven")])
+			fmt.Printf("Stoves => after returning cooked item: %d\n", kitchenRef.Apparatus[string("Stove")])
+			
+			for k := 0; k < 4; k++ {
+				fmt.Printf("%v\n", kitchenRef.Cooks[k])
+			}
+
 
 			for i := 0; readyCounter < len(foods) && i < len(kitchenRef.Cooks); i++ {
 				cook := &kitchenRef.Cooks[i]
@@ -194,12 +201,12 @@ func cookOrder(foods []int) []DeliveryCookingDetail{
 							// apparatusMapMutex.RLock()
 							// defer apparatusMapMutex.RUnlock()
 							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] - 1
-							// fmt.Printf("apparatus(%s) after taking item to cook: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
+							fmt.Printf("apparatus(%s) after taking item to cook: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
 							time.Sleep(time.Duration(foodMenu[foodID].PreparationTime) * time.Second)
 							
 							cook.WorkingCount--
 							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] + 1
-							// fmt.Printf("apparatus(%s) after returning cooked item: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
+							fmt.Printf("apparatus(%s) after returning cooked item: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
 								
 							deliveries[readyCounter] = DeliveryCookingDetail{FoodID: foodID, CookID: cook.ID}
 							readyCounter++
@@ -207,6 +214,8 @@ func cookOrder(foods []int) []DeliveryCookingDetail{
 							// results <- DeliveryCookingDetail{FoodID: foodID, CookID: cook.ID}
 				}
 			}
+			
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
