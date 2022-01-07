@@ -7,6 +7,7 @@ import (
 	"kitchen/src/components/types/cook"
 	"kitchen/src/components/types/food"
 	"kitchen/src/components/types/kitchen"
+	"kitchen/src/components/types/mutextedValue"
 	"kitchen/src/components/types/order"
 	"kitchen/src/components/types/order/props"
 	"sync"
@@ -23,6 +24,7 @@ import (
 	ItemCookingDetail = props.ItemCookingDetail
 	DeliveryCookingDetail = props.DeliveryCookingDetail
 	Delivery = order.Delivery
+	MutextedValue = mutextedValue.MutextedValue
 )
 
 
@@ -97,10 +99,10 @@ func InitCoreService() {
 	}
 
 	kitchenRef.Menu = food.GetMenuMap()
-	kitchenRef.Apparatus = make(map[string]int, 3)
-	kitchenRef.Apparatus["None"] = 999
-	kitchenRef.Apparatus["Stove"] = 2
-	kitchenRef.Apparatus["Oven"] = 2
+	kitchenRef.Apparatus = make(map[string]MutextedValue, 3)
+	kitchenRef.Apparatus["None"] = MutextedValue{Value: 999}
+	kitchenRef.Apparatus["Stove"] = MutextedValue{Value: 2}
+	kitchenRef.Apparatus["Oven"] = MutextedValue{Value: 2}
 
 	kitchenRef.OrderMap = make(map[string]Order, constants.GeneratedOrdersCount)
 	
@@ -112,7 +114,7 @@ func InitCoreService() {
 	fmt.Printf("%v\n", kitchenRef.Apparatus)
 }
 
-func ProcessOrder(order Order) Delivery {	
+func ProcessOrder(order Order, deliveryChannel *chan Delivery) Delivery {	
 	println("ProcessOrder entered!")
 
 	kitchenRef.OrderMap[order.OrderID] = order
@@ -127,9 +129,9 @@ func ProcessOrder(order Order) Delivery {
 		// cookedItems[j] = <-results
 		fmt.Printf("Cooked item apparatus: %s\n", string(foodMenu[cookedItems[j].FoodID].Apparatus))
 		// kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount = kitchenRef.Cooks[cookedItems[j].CookID].WorkingCount - 1
-		println("ovens before: ", kitchenRef.Apparatus["Oven"])
+		println("ovens before: ", kitchenRef.Apparatus["Oven"].Value)
 		// kitchenRef.Apparatus[string(foodMenu[cookedItems[j].FoodID].Apparatus)] = kitchenRef.Apparatus[string(foodMenu[cookedItems[j].FoodID].Apparatus)] + 1 
-		println("ovens after: ", kitchenRef.Apparatus["Oven"])
+		println("ovens after: ", kitchenRef.Apparatus["Oven"].Value)
 
 		delete(kitchenRef.OrderMap, order.OrderID)
 		fmt.Println(cookedItems[j])
@@ -195,17 +197,29 @@ func cookOrder(foods []int) []DeliveryCookingDetail{
 				if( (cook.Rank == dishComplexity ||
 						cook.Rank - 1 == dishComplexity) &&
 						cook.Proficiency > cook.WorkingCount &&
-						apparatusAvailable > 0){
+						apparatusAvailable.Value > 0){
 							cook.WorkingCount++
 							
 							// apparatusMapMutex.RLock()
 							// defer apparatusMapMutex.RUnlock()
-							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] - 1
+							apparatusMutex := kitchenRef.Apparatus[string(foodApparatus)].Mutex
+							apparatusMutex.Lock()
+							defer apparatusMutex.Unlock()
+							kitchenRef.Apparatus[string(foodApparatus)] = 
+								MutextedValue{Mutex: kitchenRef.Apparatus[string(foodApparatus)].Mutex, Value: kitchenRef.Apparatus[string(foodApparatus)].Value - 1}
 							fmt.Printf("apparatus(%s) after taking item to cook: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
 							time.Sleep(time.Duration(foodMenu[foodID].PreparationTime) * time.Second)
 							
+							cookMutex := cook.Mutex
+							cookMutex.Lock()
+							defer cookMutex.Unlock()
 							cook.WorkingCount--
-							kitchenRef.Apparatus[string(foodApparatus)] = kitchenRef.Apparatus[string(foodApparatus)] + 1
+							apparatusMutex = kitchenRef.Apparatus[string(foodApparatus)].Mutex
+							apparatusMutex.Lock()
+							defer apparatusMutex.Unlock()
+							kitchenRef.Apparatus[string(foodApparatus)] = 
+								MutextedValue{Mutex: kitchenRef.Apparatus[string(foodApparatus)].Mutex, Value: kitchenRef.Apparatus[string(foodApparatus)].Value - 1}
+
 							fmt.Printf("apparatus(%s) after returning cooked item: %d\n", foodApparatus, kitchenRef.Apparatus[string(foodApparatus)])
 								
 							deliveries[readyCounter] = DeliveryCookingDetail{FoodID: foodID, CookID: cook.ID}

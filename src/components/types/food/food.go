@@ -3,6 +3,7 @@ package food
 import (
 	"kitchen/src/components/constants"
 	"kitchen/src/components/types/apparatus"
+	"sync"
 )
 
 type Food struct {
@@ -11,6 +12,7 @@ type Food struct {
 	PreparationTime int
 	Complexity      int
 	Apparatus       apparatus.Apparatus
+	mutex 					sync.Mutex
 }
 
 func GetMenuArray() []Food {
