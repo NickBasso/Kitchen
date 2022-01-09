@@ -1,5 +1,7 @@
 package cook
 
+import "sync"
+
 type Cook struct {
 	ID           int
 	Rank         int
@@ -7,4 +9,5 @@ type Cook struct {
 	Name         string
 	CatchPhrase  string
 	WorkingCount int
+	Mutex 			 *sync.Mutex
 }
