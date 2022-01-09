@@ -10,5 +10,5 @@ type Order struct {
 	Priority   int
 	MaxWait    float64
 	PickUpTime int64
-	mutex 		 sync.Mutex
+	Mutex 		 *sync.Mutex
 }

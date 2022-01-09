@@ -9,5 +9,5 @@ type Cook struct {
 	Name         string
 	CatchPhrase  string
 	WorkingCount int
-	Mutex 			 sync.Mutex
+	Mutex 			 *sync.Mutex
 }

@@ -21,20 +21,14 @@ type (
 
 func processOrder(c *gin.Context) {
 	var order order.Order;
-	deliveryChannel := make(chan Delivery)
 
-	jsonDataRaw, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {}
-
-	e := json.Unmarshal(jsonDataRaw, &order)
-	if e != nil {}
+	jsonDataRaw, _ := ioutil.ReadAll(c.Request.Body)
+	_ = json.Unmarshal(jsonDataRaw, &order)
 
 	fmt.Printf("POST order %s received, processing...\n", order.OrderID)
 	c.JSON(200, "Kitchen: Order received, processing...");
 
-	// delivery := coreService.ProcessOrder(order)
-	go services.ProcessOrder(order, &deliveryChannel)
-	delivery := <-deliveryChannel
+	delivery := services.ProcessOrder(order)
 
 	reqBody, reqBodySerializationErr := json.Marshal(delivery)
 		if reqBodySerializationErr != nil {
@@ -64,23 +58,7 @@ func processOrder(c *gin.Context) {
 	fmt.Printf("POST delivery: %s => %v\n", delivery.OrderID, POSTDeliveryRes)
 }
 
-// func getOrderList(c *gin.Context) {
-// 	id := c.Query("id")
-// 	items := c.Query("items")
-// 	priority := c.Query("priority")
-// 	maxWait := c.Query("maxWait")
-
-// 	c.JSON(200, gin.H{
-// 		"id":       id,
-// 		"items":    items,
-// 		"priority": priority,	
-// 		"maxWait":  maxWait,
-// 	})
-// }
-
 func SetupController(ginEngine *gin.Engine) {
-  services.InitCoreService();
-
 	ginEngine.GET("/", func(c *gin.Context) {
 		c.JSON(200, "Kitchen server is up!")
 	})
