@@ -1,13 +1,20 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"kitchen/src/configs"
+	"kitchen/src/controllers"
+	"kitchen/src/services"
+
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-	r.Run(":4006")
+	configs.SetupENV()
+	gin.ForceConsoleColor()
+	router := gin.Default()
+  
+	services.InitCoreService()
+	controllers.SetupController(router)
+
+	router.Run(":4006")
 }
