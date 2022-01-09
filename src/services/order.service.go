@@ -180,7 +180,7 @@ func cookItem (dishID int, deliveryChannel chan DeliveryCookingDetail, waitGroup
 			}
 		}
 		
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}	
 
 	fmt.Printf("Dish %d is ready!\n", dishID)
